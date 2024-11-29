@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  db:
+    container_name: postgres-database
+    image: postgres:15
+    environment:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+
+    volumes:
+        - /tmp/database/postgres :/var/lib/postgresql/data
