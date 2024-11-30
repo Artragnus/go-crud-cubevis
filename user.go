@@ -26,6 +26,12 @@ type CreateUserInput struct {
 	Password string `json:"password"`
 }
 
+type UpdateUserInput struct {
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
 type LoginInput struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -52,7 +58,7 @@ func NewUser(name, email, password string) (*User, error) {
 	}, nil
 }
 
-func toEntity(user db.User) *User {
+func ToEntity(user db.User) *User {
 	return &User{
 		ID:       user.ID,
 		Name:     user.Name.String,
@@ -71,7 +77,7 @@ func (u *User) ValidatePassword(password string) error {
 	return nil
 }
 
-func createUserHandler(c echo.Context) error {
+func CreateUserHandler(c echo.Context) error {
 	body := new(CreateUserInput)
 
 	err := c.Bind(&body)
@@ -86,8 +92,6 @@ func createUserHandler(c echo.Context) error {
 		fmt.Println(err)
 	}
 
-	ctx := context.Background()
-
 	conn, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
 
 	if err != nil {
@@ -98,7 +102,7 @@ func createUserHandler(c echo.Context) error {
 
 	q := db.New(conn)
 
-	err = q.CreateUser(ctx, db.CreateUserParams{
+	err = q.CreateUser(context.Background(), db.CreateUserParams{
 		ID:       u.ID,
 		Name:     sql.NullString{String: u.Name, Valid: true},
 		Email:    u.Email,
@@ -113,7 +117,7 @@ func createUserHandler(c echo.Context) error {
 
 }
 
-func loginHandler(c echo.Context) error {
+func LoginHandler(c echo.Context) error {
 	body := new(LoginInput)
 
 	err := c.Bind(&body)
@@ -122,15 +126,15 @@ func loginHandler(c echo.Context) error {
 		fmt.Println(err)
 	}
 
-	ctx := context.Background()
-
 	conn, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
+
+	defer conn.Close()
 
 	q := db.New(conn)
 
-	data, err := q.GetUserByEmail(ctx, body.Email)
+	data, err := q.GetUserByEmail(context.Background(), body.Email)
 
-	user := toEntity(data)
+	user := ToEntity(data)
 
 	err = user.ValidatePassword(body.Password)
 
@@ -159,4 +163,46 @@ func loginHandler(c echo.Context) error {
 		"token": t,
 	})
 
+}
+
+func UpdateUserHandler(c echo.Context) error {
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(*JwtCustomClaims)
+
+	conn, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	defer conn.Close()
+
+	body := new(UpdateUserInput)
+
+	err = c.Bind(&body)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	q := db.New(conn)
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	err = q.UpdateUser(context.Background(), db.UpdateUserParams{
+		ID:       claims.ID,
+		Name:     sql.NullString{String: body.Name, Valid: len(body.Name) > 0},
+		Email:    body.Email,
+		Password: string(hashedPassword),
+	})
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return nil
 }
