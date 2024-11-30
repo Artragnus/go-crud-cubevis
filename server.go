@@ -26,6 +26,7 @@ func main() {
 
 	r.PUT("/users", UpdateUserHandler)
 	r.DELETE("/users", DeleteUserHandler)
+	r.POST("/addresses", CreateAddressHandler)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

@@ -58,15 +58,6 @@ func NewUser(name, email, password string) (*User, error) {
 	}, nil
 }
 
-func ToEntity(user db.User) *User {
-	return &User{
-		ID:       user.ID,
-		Name:     user.Name.String,
-		Email:    user.Email,
-		Password: user.Password,
-	}
-}
-
 func (u *User) ValidatePassword(password string) error {
 	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
 
@@ -104,7 +95,7 @@ func CreateUserHandler(c echo.Context) error {
 
 	err = q.CreateUser(context.Background(), db.CreateUserParams{
 		ID:       u.ID,
-		Name:     sql.NullString{String: u.Name, Valid: true},
+		Name:     u.Name,
 		Email:    u.Email,
 		Password: u.Password,
 	})
@@ -134,7 +125,16 @@ func LoginHandler(c echo.Context) error {
 
 	data, err := q.GetUserByEmail(context.Background(), body.Email)
 
-	user := ToEntity(data)
+	if err != nil {
+		panic(err)
+	}
+
+	user := User{
+		ID:       data.ID,
+		Name:     data.Name,
+		Email:    data.Email,
+		Password: data.Password,
+	}
 
 	err = user.ValidatePassword(body.Password)
 
@@ -195,7 +195,7 @@ func UpdateUserHandler(c echo.Context) error {
 
 	err = q.UpdateUser(context.Background(), db.UpdateUserParams{
 		ID:       claims.ID,
-		Name:     sql.NullString{String: body.Name, Valid: len(body.Name) > 0},
+		Name:     body.Name,
 		Email:    body.Email,
 		Password: string(hashedPassword),
 	})

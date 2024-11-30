@@ -7,10 +7,36 @@ package db
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/google/uuid"
 )
+
+const createAddress = `-- name: CreateAddress :exec
+INSERT INTO addresses (id, user_id, address, number, zip_code, city, state) VALUES ($1, $2, $3, $4, $5, $6, $7)
+`
+
+type CreateAddressParams struct {
+	ID      uuid.UUID
+	UserID  uuid.UUID
+	Address string
+	Number  string
+	ZipCode string
+	City    string
+	State   string
+}
+
+func (q *Queries) CreateAddress(ctx context.Context, arg CreateAddressParams) error {
+	_, err := q.db.ExecContext(ctx, createAddress,
+		arg.ID,
+		arg.UserID,
+		arg.Address,
+		arg.Number,
+		arg.ZipCode,
+		arg.City,
+		arg.State,
+	)
+	return err
+}
 
 const createUser = `-- name: CreateUser :exec
 INSERT INTO users (id, name, email, password) VALUES ($1, $2, $3, $4)
@@ -18,7 +44,7 @@ INSERT INTO users (id, name, email, password) VALUES ($1, $2, $3, $4)
 
 type CreateUserParams struct {
 	ID       uuid.UUID
-	Name     sql.NullString
+	Name     string
 	Email    string
 	Password string
 }
@@ -80,7 +106,7 @@ UPDATE users set name = $2, email = $3, password = $4 WHERE id = $1
 
 type UpdateUserParams struct {
 	ID       uuid.UUID
-	Name     sql.NullString
+	Name     string
 	Email    string
 	Password string
 }
