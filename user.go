@@ -7,6 +7,7 @@ import (
 	"github.com/Artragnus/go-crud-cubevis/db"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"golang.org/x/crypto/bcrypt"
 	"net/http"
 )
 
@@ -23,13 +24,19 @@ type CreateUserBody struct {
 	Password string `json:"password"`
 }
 
-func NewUser(name string, email string, password string) *UserEntity {
+func NewUser(name, email, password string) (*UserEntity, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &UserEntity{
 		ID:       uuid.New().String(),
 		Name:     name,
 		Email:    email,
-		Password: password,
-	}
+		Password: string(hashedPassword),
+	}, nil
 }
 
 func createUserHandler(c echo.Context) error {
