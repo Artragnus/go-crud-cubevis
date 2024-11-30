@@ -43,18 +43,30 @@ type JwtCustomClaims struct {
 }
 
 func NewUser(name, email, password string) (*User, error) {
+	if password == "" {
+		return nil, fmt.Errorf("password is required")
+	}
+
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &User{
+	user := User{
 		ID:       uuid.New(),
 		Name:     name,
 		Email:    email,
 		Password: string(hashedPassword),
-	}, nil
+	}
+
+	err = user.Validate()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }
 
 func (u *User) ValidatePassword(password string) error {
@@ -62,6 +74,22 @@ func (u *User) ValidatePassword(password string) error {
 
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (u *User) Validate() error {
+	if u.Name == "" {
+		return fmt.Errorf("name is required")
+	}
+
+	if u.Email == "" {
+		return fmt.Errorf("email is required")
+	}
+
+	if u.Password == "" {
+		return fmt.Errorf("password is required")
 	}
 
 	return nil
@@ -79,12 +107,15 @@ func CreateUserHandler(c echo.Context) error {
 	u, err := NewUser(body.Name, body.Email, body.Password)
 
 	if err != nil {
-		fmt.Println(err)
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": err.Error(),
+		})
 	}
 
-	conn, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
+	conn, err := sql.Open("postgres", env.DataSourceName)
 
 	if err != nil {
+
 		fmt.Println(err)
 	}
 
@@ -124,7 +155,7 @@ func LoginHandler(c echo.Context) error {
 		fmt.Println(err)
 	}
 
-	conn, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
+	conn, err := sql.Open("postgres", env.DataSourceName)
 
 	defer conn.Close()
 
@@ -160,7 +191,7 @@ func LoginHandler(c echo.Context) error {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	t, err := token.SignedString([]byte("secret"))
+	t, err := token.SignedString([]byte(env.JWTSecret))
 
 	if err != nil {
 		fmt.Println(err)
@@ -177,7 +208,6 @@ func UpdateUserHandler(c echo.Context) error {
 	claims := user.Claims.(*JwtCustomClaims)
 
 	body := new(UpdateUserInput)
-	params := new(db.UpdateUserParams)
 
 	err := c.Bind(&body)
 
@@ -185,7 +215,24 @@ func UpdateUserHandler(c echo.Context) error {
 		fmt.Println(err)
 	}
 
-	conn, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
+	var hashedPassword []byte
+
+	if body.Password != "" {
+		hashedPassword, err = bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
+
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	params := db.UpdateUserParams{
+		ID:       claims.ID,
+		Name:     body.Name,
+		Email:    body.Email,
+		Password: string(hashedPassword),
+	}
+
+	conn, err := sql.Open("postgres", env.DataSourceName)
 
 	if err != nil {
 		fmt.Println(err)
@@ -201,22 +248,16 @@ func UpdateUserHandler(c echo.Context) error {
 		panic(err)
 	}
 
-	if body.Email != "" {
-		params.Email = u.Email
-	}
-
-	if body.Name != "" {
+	if params.Name == "" {
 		params.Name = u.Name
 	}
 
-	if body.Password != "" {
-		params.Password = u.Password
+	if params.Email == "" {
+		params.Email = u.Email
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
-
-	if err != nil {
-		fmt.Println(err)
+	if params.Password == "" {
+		params.Password = u.Password
 	}
 
 	err = q.UpdateUser(context.Background(), db.UpdateUserParams{
@@ -227,7 +268,9 @@ func UpdateUserHandler(c echo.Context) error {
 	})
 
 	if err != nil {
-		fmt.Println(err)
+		c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "Internal server error",
+		})
 	}
 
 	return c.JSON(http.StatusNoContent, nil)
@@ -237,7 +280,7 @@ func DeleteUserHandler(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(*JwtCustomClaims)
 
-	conn, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
+	conn, err := sql.Open("postgres", env.DataSourceName)
 
 	if err != nil {
 		fmt.Println(err)

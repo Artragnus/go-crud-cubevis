@@ -7,9 +7,19 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func main() {
-	e := echo.New()
+var env *Conf
 
+func main() {
+	var err error
+
+	env, err = LoadConfig(".")
+
+	if err != nil {
+		panic(err)
+	}
+
+	e := echo.New()
+	
 	e.POST("/user", CreateUserHandler)
 	e.POST("/login", LoginHandler)
 
@@ -30,5 +40,5 @@ func main() {
 	r.GET("/address/:id", GetAddressByIdHandler)
 	r.GET("/address", GetAddressesHandler)
 
-	e.Logger.Fatal(e.Start(":8080"))
+	e.Logger.Fatal(e.Start(":" + env.Port))
 }
