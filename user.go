@@ -67,4 +67,5 @@ func createUserHandler(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, u)
+
 }
