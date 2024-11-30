@@ -59,6 +59,20 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 	return err
 }
 
+const deleteAddress = `-- name: DeleteAddress :exec
+DELETE FROM addresses WHERE id = $1 AND user_id = $2
+`
+
+type DeleteAddressParams struct {
+	ID     uuid.UUID
+	UserID uuid.UUID
+}
+
+func (q *Queries) DeleteAddress(ctx context.Context, arg DeleteAddressParams) error {
+	_, err := q.db.ExecContext(ctx, deleteAddress, arg.ID, arg.UserID)
+	return err
+}
+
 const deleteUser = `-- name: DeleteUser :exec
 DELETE FROM users WHERE id = $1
 `

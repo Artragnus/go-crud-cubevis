@@ -19,7 +19,7 @@ func main() {
 	}
 
 	e := echo.New()
-	
+
 	e.POST("/user", CreateUserHandler)
 	e.POST("/login", LoginHandler)
 
@@ -39,6 +39,7 @@ func main() {
 	r.POST("/address", CreateAddressHandler)
 	r.GET("/address/:id", GetAddressByIdHandler)
 	r.GET("/address", GetAddressesHandler)
+	r.DELETE("/address/:id", DeleteAddressHandler)
 
 	e.Logger.Fatal(e.Start(":" + env.Port))
 }

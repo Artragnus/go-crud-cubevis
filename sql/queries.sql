@@ -21,3 +21,6 @@ SELECT * FROM addresses WHERE user_id = $1;
 
 -- name: GetAddressById :one
 SELECT * FROM addresses WHERE id = $1 AND user_id = $2;
+
+-- name: DeleteAddress :exec
+DELETE FROM addresses WHERE id = $1 AND user_id = $2;

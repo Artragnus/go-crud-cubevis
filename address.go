@@ -117,37 +117,13 @@ func CreateAddressHandler(c echo.Context) error {
 
 }
 
-func GetAddressesHandler(c echo.Context) error {
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(*JwtCustomClaims)
-
-	conn, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
-
-	if err != nil {
-		panic(err)
-	}
-
-	defer conn.Close()
-
-	q := db.New(conn)
-
-	addresses, err := q.GetAddresses(context.Background(), claims.ID)
-
-	if err != nil {
-		panic(err)
-	}
-
-	return c.JSON(http.StatusOK, addresses)
-
-}
-
 func GetAddressByIdHandler(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(*JwtCustomClaims)
 
 	id := c.Param("id")
 
-	conn, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
+	conn, err := sql.Open("postgres", env.DataSourceName)
 
 	if err != nil {
 		panic(err)
@@ -171,9 +147,63 @@ func GetAddressByIdHandler(c echo.Context) error {
 	})
 
 	if err != nil {
-		panic(err)
+		return c.JSON(http.StatusNotFound, echo.Map{
+			"message": "Address not found",
+		})
 	}
 
 	return c.JSON(http.StatusOK, address)
+}
 
+func GetAddressesHandler(c echo.Context) error {
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(*JwtCustomClaims)
+
+	conn, err := sql.Open("postgres", env.DataSourceName)
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer conn.Close()
+
+	q := db.New(conn)
+
+	addresses, err := q.GetAddresses(context.Background(), claims.ID)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return c.JSON(http.StatusOK, addresses)
+
+}
+
+func DeleteAddressHandler(c echo.Context) error {
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(*JwtCustomClaims)
+	id := c.Param("id")
+
+	conn, err := sql.Open("postgres", env.DataSourceName)
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer conn.Close()
+
+	q := db.New(conn)
+
+	err = q.DeleteAddress(context.Background(), db.DeleteAddressParams{
+		ID:     uuid.MustParse(id),
+		UserID: claims.ID,
+	})
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, echo.Map{
+			"message": "Address not found",
+		})
+	}
+
+	return c.JSON(http.StatusNoContent, nil)
 }
