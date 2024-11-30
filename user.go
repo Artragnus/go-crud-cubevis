@@ -11,7 +11,7 @@ import (
 	"net/http"
 )
 
-type UserEntity struct {
+type User struct {
 	ID       string `json:"id"`
 	Name     string `json:"name"`
 	Email    string `json:"email"`
@@ -24,19 +24,31 @@ type CreateUserBody struct {
 	Password string `json:"password"`
 }
 
-func NewUser(name, email, password string) (*UserEntity, error) {
+func NewUser(name, email, password string) (*User, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &UserEntity{
+	return &User{
+
 		ID:       uuid.New().String(),
 		Name:     name,
 		Email:    email,
 		Password: string(hashedPassword),
 	}, nil
+}
+
+func (u *User) ValidatePassword(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+
+	if err != nil {
+		return false
+	}
+
+	return true
+
 }
 
 func createUserHandler(c echo.Context) error {
@@ -48,7 +60,11 @@ func createUserHandler(c echo.Context) error {
 		fmt.Println(err)
 	}
 
-	u := NewUser(body.Name, body.Email, body.Password)
+	u, err := NewUser(body.Name, body.Email, body.Password)
+
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	ctx := context.Background()
 
