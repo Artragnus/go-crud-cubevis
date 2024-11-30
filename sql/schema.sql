@@ -1,13 +1,13 @@
 CREATE TABLE users(
-    id CHAR(32) PRIMARY KEY UNIQUE NOT NULL,
+    id UUID PRIMARY KEY UNIQUE NOT NULL,
     name VARCHAR(255),
     email VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE address (
-    id CHAR(32) PRIMARY KEY UNIQUE NOT NULL,
-    user_id CHAR(32) NOT NULL REFERENCES users(id),
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id),
     address VARCHAR(255) NOT NULL,
     number VARCHAR(255),
     zip_code VARCHAR(255),
