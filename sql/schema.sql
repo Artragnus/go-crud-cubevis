@@ -15,3 +15,4 @@ CREATE TABLE addresses (
     state VARCHAR(255) NOT NULL
 );
 
+

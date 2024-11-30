@@ -50,7 +50,6 @@ func NewUser(name, email, password string) (*User, error) {
 	}
 
 	return &User{
-
 		ID:       uuid.New(),
 		Name:     name,
 		Email:    email,
@@ -93,6 +92,14 @@ func CreateUserHandler(c echo.Context) error {
 
 	q := db.New(conn)
 
+	_, err = q.GetUserByEmail(context.Background(), u.Email)
+
+	if err == nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "Email already in use",
+		})
+	}
+
 	err = q.CreateUser(context.Background(), db.CreateUserParams{
 		ID:       u.ID,
 		Name:     u.Name,
@@ -123,17 +130,17 @@ func LoginHandler(c echo.Context) error {
 
 	q := db.New(conn)
 
-	data, err := q.GetUserByEmail(context.Background(), body.Email)
+	u, err := q.GetUserByEmail(context.Background(), body.Email)
 
 	if err != nil {
 		panic(err)
 	}
 
 	user := User{
-		ID:       data.ID,
-		Name:     data.Name,
-		Email:    data.Email,
-		Password: data.Password,
+		ID:       u.ID,
+		Name:     u.Name,
+		Email:    u.Email,
+		Password: u.Password,
 	}
 
 	err = user.ValidatePassword(body.Password)
@@ -169,6 +176,15 @@ func UpdateUserHandler(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(*JwtCustomClaims)
 
+	body := new(UpdateUserInput)
+	params := new(db.UpdateUserParams)
+
+	err := c.Bind(&body)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	conn, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
 
 	if err != nil {
@@ -177,15 +193,25 @@ func UpdateUserHandler(c echo.Context) error {
 
 	defer conn.Close()
 
-	body := new(UpdateUserInput)
+	q := db.New(conn)
 
-	err = c.Bind(&body)
+	u, err := q.GetUserById(context.Background(), claims.ID)
 
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 
-	q := db.New(conn)
+	if body.Email != "" {
+		params.Email = u.Email
+	}
+
+	if body.Name != "" {
+		params.Name = u.Name
+	}
+
+	if body.Password != "" {
+		params.Password = u.Password
+	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
 
