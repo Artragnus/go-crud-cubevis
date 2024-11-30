@@ -10,7 +10,7 @@ import (
 func main() {
 	e := echo.New()
 
-	e.POST("/users", CreateUserHandler)
+	e.POST("/user", CreateUserHandler)
 	e.POST("/login", LoginHandler)
 
 	config := echojwt.Config{
@@ -24,9 +24,11 @@ func main() {
 
 	r.Use(echojwt.WithConfig(config))
 
-	r.PUT("/users", UpdateUserHandler)
+	r.PUT("/user", UpdateUserHandler)
 	r.DELETE("/users", DeleteUserHandler)
-	r.POST("/addresses", CreateAddressHandler)
+	r.POST("/address", CreateAddressHandler)
+	r.GET("/address/:id", GetAddressByIdHandler)
+	r.GET("/address", GetAddressesHandler)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

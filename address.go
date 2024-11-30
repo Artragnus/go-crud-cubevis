@@ -64,3 +64,64 @@ func CreateAddressHandler(c echo.Context) error {
 	return c.JSON(http.StatusCreated, address)
 
 }
+
+func GetAddressesHandler(c echo.Context) error {
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(*JwtCustomClaims)
+
+	conn, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer conn.Close()
+
+	q := db.New(conn)
+
+	addresses, err := q.GetAddresses(context.Background(), claims.ID)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return c.JSON(http.StatusOK, addresses)
+
+}
+
+func GetAddressByIdHandler(c echo.Context) error {
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(*JwtCustomClaims)
+
+	id := c.Param("id")
+
+	conn, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer conn.Close()
+
+	q := db.New(conn)
+
+	parseUUID, err := uuid.Parse(id)
+
+	if err != nil {
+		return c.JSON(http.StatusNotFound, echo.Map{
+			"message": "Address not found",
+		})
+	}
+
+	address, err := q.GetAddressById(context.Background(), db.GetAddressByIdParams{
+		ID:     parseUUID,
+		UserID: claims.ID,
+	})
+
+	if err != nil {
+		panic(err)
+	}
+
+	return c.JSON(http.StatusOK, address)
+
+}

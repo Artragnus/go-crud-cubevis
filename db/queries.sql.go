@@ -68,6 +68,65 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const getAddressById = `-- name: GetAddressById :one
+SELECT id, user_id, address, number, zip_code, city, state FROM addresses WHERE id = $1 AND user_id = $2
+`
+
+type GetAddressByIdParams struct {
+	ID     uuid.UUID
+	UserID uuid.UUID
+}
+
+func (q *Queries) GetAddressById(ctx context.Context, arg GetAddressByIdParams) (Address, error) {
+	row := q.db.QueryRowContext(ctx, getAddressById, arg.ID, arg.UserID)
+	var i Address
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Address,
+		&i.Number,
+		&i.ZipCode,
+		&i.City,
+		&i.State,
+	)
+	return i, err
+}
+
+const getAddresses = `-- name: GetAddresses :many
+SELECT id, user_id, address, number, zip_code, city, state FROM addresses WHERE user_id = $1
+`
+
+func (q *Queries) GetAddresses(ctx context.Context, userID uuid.UUID) ([]Address, error) {
+	rows, err := q.db.QueryContext(ctx, getAddresses, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Address
+	for rows.Next() {
+		var i Address
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Address,
+			&i.Number,
+			&i.ZipCode,
+			&i.City,
+			&i.State,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT id, name, email, password FROM users WHERE email = $1
 `

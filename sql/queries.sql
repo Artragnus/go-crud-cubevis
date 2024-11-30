@@ -15,3 +15,9 @@ DELETE FROM users WHERE id = $1;
 
 -- name: CreateAddress :exec
 INSERT INTO addresses (id, user_id, address, number, zip_code, city, state) VALUES ($1, $2, $3, $4, $5, $6, $7);
+
+-- name: GetAddresses :many
+SELECT * FROM addresses WHERE user_id = $1;
+
+-- name: GetAddressById :one
+SELECT * FROM addresses WHERE id = $1 AND user_id = $2;
