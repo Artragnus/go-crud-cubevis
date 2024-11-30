@@ -9,6 +9,7 @@ func main() {
 	e := echo.New()
 
 	e.POST("/users", createUserHandler)
+	e.POST("/login", loginHandler)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

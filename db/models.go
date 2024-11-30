@@ -6,11 +6,12 @@ package db
 
 import (
 	"database/sql"
+	"github.com/google/uuid"
 )
 
 type Address struct {
-	ID      string
-	UserID  string
+	ID      uuid.UUID
+	UserID  uuid.UUID
 	Address string
 	Number  sql.NullString
 	ZipCode sql.NullString
@@ -19,7 +20,7 @@ type Address struct {
 }
 
 type User struct {
-	ID       string
+	ID       uuid.UUID
 	Name     sql.NullString
 	Email    string
 	Password string
