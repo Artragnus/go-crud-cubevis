@@ -204,5 +204,28 @@ func UpdateUserHandler(c echo.Context) error {
 		fmt.Println(err)
 	}
 
-	return nil
+	return c.JSON(http.StatusNoContent, nil)
+}
+
+func DeleteUserHandler(c echo.Context) error {
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(*JwtCustomClaims)
+
+	conn, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	defer conn.Close()
+
+	q := db.New(conn)
+
+	err = q.DeleteUser(context.Background(), claims.ID)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return c.JSON(http.StatusNoContent, nil)
 }

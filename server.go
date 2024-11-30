@@ -25,6 +25,7 @@ func main() {
 	r.Use(echojwt.WithConfig(config))
 
 	r.PUT("/users", UpdateUserHandler)
+	r.DELETE("/users", DeleteUserHandler)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
