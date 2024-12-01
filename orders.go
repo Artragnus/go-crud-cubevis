@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/Artragnus/go-crud-cubevis/db"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -145,6 +146,8 @@ func GetOrderByIdHandler(c echo.Context) error {
 	parseUUID, err := uuid.Parse(id)
 
 	if err != nil {
+		fmt.Println(id)
+		fmt.Println(err)
 		return c.JSON(http.StatusBadRequest, echo.Map{
 			"message": "Invalid order id",
 		})
@@ -184,6 +187,45 @@ func GetOrderByIdHandler(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, output)
 
+}
+
+func GetDetailedOrderByIDHandler(c echo.Context) error {
+	users := c.Get("user").(*jwt.Token)
+	claims := users.Claims.(*JwtCustomClaims)
+
+	id := c.Param("id")
+	parseUUID, err := uuid.Parse(id)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "Invalid order id",
+		})
+	}
+
+	conn, err := sql.Open("postgres", env.DataSourceName)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "Internal server error",
+		})
+	}
+
+	defer conn.Close()
+
+	q := db.New(conn)
+
+	order, err := q.GetDeitaledOrderById(context.Background(), db.GetDeitaledOrderByIdParams{
+		ID:   parseUUID,
+		ID_2: claims.ID,
+	})
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "Internal server error",
+		})
+	}
+
+	return c.JSON(http.StatusOK, order)
 }
 
 func GetOrdersHandler(c echo.Context) error {

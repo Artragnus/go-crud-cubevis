@@ -48,6 +48,18 @@ VALUES
 -- name: GetOrderById :one
 SELECT * FROM orders WHERE id = $1 AND user_id = $2;
 
+-- name: GetDeitaledOrderById :one
+SELECT u.name, u.email, o.total_value, o.quantity, p.name as product_name, a.state, a.address, a.number, a.zip_code, a.city
+FROM users u
+JOIN orders o
+ON o.id = $1
+AND u.id = $2
+JOIN products p
+ON p.id = o.product_id
+JOIN addresses a
+ON a.id = o.address_id
+AND a.user_id = u.id;
+
 -- name: GetOrders :many
 SELECT * FROM orders WHERE user_id = $1;
 

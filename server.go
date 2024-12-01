@@ -48,6 +48,7 @@ func main() {
 
 	r.POST("/order", CreateOrderHandler)
 	r.GET("/order/:id", GetOrderByIdHandler)
+	r.GET("/order/:id/details", GetDetailedOrderByIDHandler)
 	r.GET("/order", GetOrdersHandler)
 
 	e.Logger.Fatal(e.Start(":" + env.Port))

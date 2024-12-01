@@ -172,6 +172,55 @@ func (q *Queries) GetAddresses(ctx context.Context, userID uuid.UUID) ([]Address
 	return items, nil
 }
 
+const getDeitaledOrderById = `-- name: GetDeitaledOrderById :one
+SELECT u.name, u.email, o.total_value, o.quantity, p.name as product_name, a.state, a.address, a.number, a.zip_code, a.city
+FROM users u
+JOIN orders o
+ON o.id = $1
+AND u.id = $2
+JOIN products p
+ON p.id = o.product_id
+JOIN addresses a
+ON a.id = o.address_id
+AND a.user_id = u.id
+`
+
+type GetDeitaledOrderByIdParams struct {
+	ID   uuid.UUID
+	ID_2 uuid.UUID
+}
+
+type GetDeitaledOrderByIdRow struct {
+	Name        string
+	Email       string
+	TotalValue  int32
+	Quantity    int32
+	ProductName string
+	State       string
+	Address     string
+	Number      string
+	ZipCode     string
+	City        string
+}
+
+func (q *Queries) GetDeitaledOrderById(ctx context.Context, arg GetDeitaledOrderByIdParams) (GetDeitaledOrderByIdRow, error) {
+	row := q.db.QueryRowContext(ctx, getDeitaledOrderById, arg.ID, arg.ID_2)
+	var i GetDeitaledOrderByIdRow
+	err := row.Scan(
+		&i.Name,
+		&i.Email,
+		&i.TotalValue,
+		&i.Quantity,
+		&i.ProductName,
+		&i.State,
+		&i.Address,
+		&i.Number,
+		&i.ZipCode,
+		&i.City,
+	)
+	return i, err
+}
+
 const getOrderById = `-- name: GetOrderById :one
 SELECT id, user_id, product_id, quantity, total_value, address_id FROM orders WHERE id = $1 AND user_id = $2
 `
