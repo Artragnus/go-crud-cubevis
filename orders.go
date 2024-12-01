@@ -26,6 +26,15 @@ type CreateOrderOutput struct {
 	TotalValue int32     `json:"total_value"`
 }
 
+type GetOrderByIdOutput struct {
+	ID         uuid.UUID `json:"id"`
+	UserID     uuid.UUID `json:"user_id"`
+	ProductID  int32     `json:"product_id"`
+	Quantity   int32     `json:"quantity"`
+	AddressID  uuid.UUID `json:"address_id"`
+	TotalValue int32     `json:"total_value"`
+}
+
 type GetOrdersOutput struct {
 	ID         uuid.UUID `json:"id"`
 	UserID     uuid.UUID `json:"user_id"`
@@ -125,6 +134,55 @@ func CreateOrderHandler(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, output)
+
+}
+
+func GetOrderByIdHandler(c echo.Context) error {
+	users := c.Get("user").(*jwt.Token)
+	claims := users.Claims.(*JwtCustomClaims)
+
+	id := c.Param("id")
+	parseUUID, err := uuid.Parse(id)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "Invalid order id",
+		})
+	}
+
+	conn, err := sql.Open("postgres", env.DataSourceName)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "Internal server error",
+		})
+	}
+
+	defer conn.Close()
+
+	q := db.New(conn)
+
+	order, err := q.GetOrderById(context.Background(), db.GetOrderByIdParams{
+		ID:     parseUUID,
+		UserID: claims.ID,
+	})
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "Internal server error",
+		})
+	}
+
+	output := GetOrderByIdOutput{
+		ID:         order.ID,
+		UserID:     order.UserID,
+		ProductID:  order.ProductID,
+		Quantity:   order.Quantity,
+		AddressID:  order.AddressID,
+		TotalValue: order.TotalValue,
+	}
+
+	return c.JSON(http.StatusOK, output)
 
 }
 
