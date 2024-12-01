@@ -12,7 +12,10 @@ import (
 )
 
 const createAddress = `-- name: CreateAddress :exec
-INSERT INTO addresses (id, user_id, address, number, zip_code, city, state) VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO addresses
+(id, user_id, address, number, zip_code, city, state)
+VALUES
+($1, $2, $3, $4, $5, $6, $7)
 `
 
 type CreateAddressParams struct {
@@ -141,6 +144,44 @@ func (q *Queries) GetAddresses(ctx context.Context, userID uuid.UUID) ([]Address
 	return items, nil
 }
 
+const getProductById = `-- name: GetProductById :one
+SELECT id, name, value FROM products WHERE id = $1
+`
+
+func (q *Queries) GetProductById(ctx context.Context, id int32) (Product, error) {
+	row := q.db.QueryRowContext(ctx, getProductById, id)
+	var i Product
+	err := row.Scan(&i.ID, &i.Name, &i.Value)
+	return i, err
+}
+
+const getProducts = `-- name: GetProducts :many
+SELECT id, name, value FROM products
+`
+
+func (q *Queries) GetProducts(ctx context.Context) ([]Product, error) {
+	rows, err := q.db.QueryContext(ctx, getProducts)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Product
+	for rows.Next() {
+		var i Product
+		if err := rows.Scan(&i.ID, &i.Name, &i.Value); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT id, name, email, password FROM users WHERE email = $1
 `
@@ -174,7 +215,9 @@ func (q *Queries) GetUserById(ctx context.Context, id uuid.UUID) (User, error) {
 }
 
 const updateAddress = `-- name: UpdateAddress :exec
-UPDATE addresses set address = $3, number = $4, zip_code = $5, city = $6, state = $7 WHERE id = $1 AND user_id = $2
+UPDATE addresses
+SET address = $3, number = $4, zip_code = $5, city = $6, state = $7
+WHERE id = $1 AND user_id = $2
 `
 
 type UpdateAddressParams struct {

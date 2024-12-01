@@ -18,6 +18,12 @@ type Address struct {
 	State   string
 }
 
+type Product struct {
+	ID    int32
+	Name  string
+	Value int32
+}
+
 type User struct {
 	ID       uuid.UUID
 	Name     string

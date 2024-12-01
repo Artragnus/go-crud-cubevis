@@ -15,4 +15,10 @@ CREATE TABLE addresses (
     state VARCHAR(255) NOT NULL
 );
 
+CREATE TABLE products (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    value INTEGER NOT NULL
+);
+
 

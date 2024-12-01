@@ -35,7 +35,7 @@ func main() {
 	r.Use(echojwt.WithConfig(config))
 
 	r.PUT("/user", UpdateUserHandler)
-	r.DELETE("/users", DeleteUserHandler)
+	r.DELETE("/user", DeleteUserHandler)
 	r.POST("/address", CreateAddressHandler)
 	r.GET("/address/:id", GetAddressByIdHandler)
 	r.PUT("/address/:id", UpdateAddressHandler)

@@ -162,7 +162,9 @@ func LoginHandler(c echo.Context) error {
 	err := c.Bind(&body)
 
 	if err != nil {
-		fmt.Println(err)
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "Invalid request body",
+		})
 	}
 
 	conn, err := sql.Open("postgres", env.DataSourceName)
@@ -174,7 +176,9 @@ func LoginHandler(c echo.Context) error {
 	u, err := q.GetUserByEmail(context.Background(), body.Email)
 
 	if err != nil {
-		panic(err)
+		return c.JSON(http.StatusUnauthorized, echo.Map{
+			"message": "Invalid email or password",
+		})
 	}
 
 	user := User{
