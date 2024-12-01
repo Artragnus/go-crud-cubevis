@@ -14,6 +14,6 @@ COPY --from=BUILD /app/api ./
 
 COPY --from=BUILD /app/.env ./
 
-EXPOSE 8080
+EXPOSE ${PORT}
 
 CMD ["./api"]
