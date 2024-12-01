@@ -189,7 +189,7 @@ func GetOrderByIdHandler(c echo.Context) error {
 
 }
 
-func GetDetailedOrderByIDHandler(c echo.Context) error {
+func GetDetailedOrderByIdHandler(c echo.Context) error {
 	users := c.Get("user").(*jwt.Token)
 	claims := users.Claims.(*JwtCustomClaims)
 
@@ -269,7 +269,7 @@ func GetOrdersHandler(c echo.Context) error {
 
 }
 
-func GetOrdersByProductHandler(c echo.Context) error {
+func GetOrdersByProductIdHandler(c echo.Context) error {
 	id := c.Param("id")
 
 	num, err := strconv.Atoi(id)
