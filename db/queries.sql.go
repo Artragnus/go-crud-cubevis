@@ -172,6 +172,63 @@ func (q *Queries) GetAddresses(ctx context.Context, userID uuid.UUID) ([]Address
 	return items, nil
 }
 
+const getOrderById = `-- name: GetOrderById :one
+SELECT id, user_id, product_id, quantity, total_value, address_id FROM orders WHERE id = $1 AND user_id = $2
+`
+
+type GetOrderByIdParams struct {
+	ID     uuid.UUID
+	UserID uuid.UUID
+}
+
+func (q *Queries) GetOrderById(ctx context.Context, arg GetOrderByIdParams) (Order, error) {
+	row := q.db.QueryRowContext(ctx, getOrderById, arg.ID, arg.UserID)
+	var i Order
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.ProductID,
+		&i.Quantity,
+		&i.TotalValue,
+		&i.AddressID,
+	)
+	return i, err
+}
+
+const getOrders = `-- name: GetOrders :many
+SELECT id, user_id, product_id, quantity, total_value, address_id FROM orders WHERE user_id = $1
+`
+
+func (q *Queries) GetOrders(ctx context.Context, userID uuid.UUID) ([]Order, error) {
+	rows, err := q.db.QueryContext(ctx, getOrders, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Order
+	for rows.Next() {
+		var i Order
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.ProductID,
+			&i.Quantity,
+			&i.TotalValue,
+			&i.AddressID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getProductById = `-- name: GetProductById :one
 SELECT id, name, value FROM products WHERE id = $1
 `

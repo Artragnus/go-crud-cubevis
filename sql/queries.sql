@@ -45,6 +45,12 @@ INSERT INTO orders
 VALUES
 ($1, $2, $3, $4, $5, $6);
 
+-- name: GetOrderById :one
+SELECT * FROM orders WHERE id = $1 AND user_id = $2;
+
+-- name: GetOrders :many
+SELECT * FROM orders WHERE user_id = $1;
+
 -- name: GetUsersByProduct :many
 SELECT u.name, u.email, o.total_value, o.quantity, o.id as order_id, a.state, a.address, a.number, a.zip_code, a.city
 FROM users u

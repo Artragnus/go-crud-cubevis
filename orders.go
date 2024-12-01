@@ -26,6 +26,15 @@ type CreateOrderOutput struct {
 	TotalValue int32     `json:"total_value"`
 }
 
+type GetOrdersOutput struct {
+	ID         uuid.UUID `json:"id"`
+	UserID     uuid.UUID `json:"user_id"`
+	ProductID  int32     `json:"product_id"`
+	Quantity   int32     `json:"quantity"`
+	AddressID  uuid.UUID `json:"address_id"`
+	TotalValue int32     `json:"total_value"`
+}
+
 type GetOrdersByProductOutput struct {
 	Name       string    `json:"name"`
 	Email      string    `json:"email"`
@@ -122,6 +131,41 @@ func CreateOrderHandler(c echo.Context) error {
 func GetOrdersHandler(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(*JwtCustomClaims)
+
+	conn, err := sql.Open("postgres", env.DataSourceName)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "Internal server error",
+		})
+	}
+
+	defer conn.Close()
+
+	q := db.New(conn)
+
+	orders, err := q.GetOrders(context.Background(), claims.ID)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "Internal server error",
+		})
+	}
+
+	output := make([]GetOrdersOutput, len(orders))
+
+	for i, o := range orders {
+		output[i] = GetOrdersOutput{
+			ID:         o.ID,
+			UserID:     o.UserID,
+			ProductID:  o.ProductID,
+			Quantity:   o.Quantity,
+			AddressID:  o.AddressID,
+			TotalValue: o.TotalValue,
+		}
+	}
+
+	return c.JSON(http.StatusOK, output)
 
 }
 
