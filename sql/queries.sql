@@ -33,6 +33,9 @@ WHERE id = $1 AND user_id = $2;
 -- name: DeleteAddress :exec
 DELETE FROM addresses WHERE id = $1 AND user_id = $2;
 
+-- name: CreateProduct :exec
+INSERT INTO products (name, value) VALUES ($1, $2);
+
 -- name: GetProductById :one
 SELECT * FROM products WHERE id = $1;
 
