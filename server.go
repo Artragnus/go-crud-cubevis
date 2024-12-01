@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/Artragnus/go-crud-cubevis/db"
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
@@ -13,6 +14,12 @@ func main() {
 	var err error
 
 	env, err = LoadConfig(".")
+
+	if err != nil {
+		panic(err)
+	}
+
+	err = db.Seed(env.DataSourceName)
 
 	if err != nil {
 		panic(err)

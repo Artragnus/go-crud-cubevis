@@ -15,6 +15,11 @@ type ProductOutput struct {
 	Value int32  `json:"value"`
 }
 
+type CreateProductInput struct {
+	Name  string `json:"name"`
+	Value int32  `json:"value"`
+}
+
 func GetProductByIdHandler(c echo.Context) error {
 	id := c.Param("id")
 
