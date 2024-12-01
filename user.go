@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/Artragnus/go-crud-cubevis/db"
 	"github.com/golang-jwt/jwt/v5"
@@ -11,6 +12,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"time"
+)
+
+var (
+	ErrNameIsRequired     = errors.New("name is required")
+	ErrEmailIsRequired    = errors.New("email is required")
+	ErrPasswordIsRequired = errors.New("password is required")
 )
 
 type User struct {
@@ -81,15 +88,15 @@ func (u *User) ValidatePassword(password string) error {
 
 func (u *User) Validate() error {
 	if u.Name == "" {
-		return fmt.Errorf("name is required")
+		return ErrNameIsRequired
 	}
 
 	if u.Email == "" {
-		return fmt.Errorf("email is required")
+		return ErrEmailIsRequired
 	}
 
 	if u.Password == "" {
-		return fmt.Errorf("password is required")
+		return ErrPasswordIsRequired
 	}
 
 	return nil
@@ -101,7 +108,9 @@ func CreateUserHandler(c echo.Context) error {
 	err := c.Bind(&body)
 
 	if err != nil {
-		fmt.Println(err)
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "Invalid request body",
+		})
 	}
 
 	u, err := NewUser(body.Name, body.Email, body.Password)
@@ -115,8 +124,9 @@ func CreateUserHandler(c echo.Context) error {
 	conn, err := sql.Open("postgres", env.DataSourceName)
 
 	if err != nil {
-
-		fmt.Println(err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "Internal server error",
+		})
 	}
 
 	defer conn.Close()
@@ -268,7 +278,7 @@ func UpdateUserHandler(c echo.Context) error {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, echo.Map{
+		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "Internal server error",
 		})
 	}

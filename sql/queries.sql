@@ -22,5 +22,8 @@ SELECT * FROM addresses WHERE user_id = $1;
 -- name: GetAddressById :one
 SELECT * FROM addresses WHERE id = $1 AND user_id = $2;
 
+-- name: UpdateAddress :exec
+UPDATE addresses set address = $3, number = $4, zip_code = $5, city = $6, state = $7 WHERE id = $1 AND user_id = $2;
+
 -- name: DeleteAddress :exec
 DELETE FROM addresses WHERE id = $1 AND user_id = $2;

@@ -173,6 +173,33 @@ func (q *Queries) GetUserById(ctx context.Context, id uuid.UUID) (User, error) {
 	return i, err
 }
 
+const updateAddress = `-- name: UpdateAddress :exec
+UPDATE addresses set address = $3, number = $4, zip_code = $5, city = $6, state = $7 WHERE id = $1 AND user_id = $2
+`
+
+type UpdateAddressParams struct {
+	ID      uuid.UUID
+	UserID  uuid.UUID
+	Address string
+	Number  string
+	ZipCode string
+	City    string
+	State   string
+}
+
+func (q *Queries) UpdateAddress(ctx context.Context, arg UpdateAddressParams) error {
+	_, err := q.db.ExecContext(ctx, updateAddress,
+		arg.ID,
+		arg.UserID,
+		arg.Address,
+		arg.Number,
+		arg.ZipCode,
+		arg.City,
+		arg.State,
+	)
+	return err
+}
+
 const updateUser = `-- name: UpdateUser :exec
 UPDATE users set name = $2, email = $3, password = $4 WHERE id = $1
 `

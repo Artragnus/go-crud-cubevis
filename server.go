@@ -27,7 +27,7 @@ func main() {
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
 			return new(JwtCustomClaims)
 		},
-		SigningKey: []byte("secret"),
+		SigningKey: []byte(env.JWTSecret),
 	}
 
 	r := e.Group("/auth")
@@ -38,6 +38,7 @@ func main() {
 	r.DELETE("/users", DeleteUserHandler)
 	r.POST("/address", CreateAddressHandler)
 	r.GET("/address/:id", GetAddressByIdHandler)
+	r.PUT("/address/:id", UpdateAddressHandler)
 	r.GET("/address", GetAddressesHandler)
 	r.DELETE("/address/:id", DeleteAddressHandler)
 

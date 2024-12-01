@@ -3,12 +3,20 @@ package main
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"errors"
 	"github.com/Artragnus/go-crud-cubevis/db"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"net/http"
+)
+
+var (
+	ErrAddressIsRequired = errors.New("address is required")
+	ErrNumberIsRequired  = errors.New("number is required")
+	ErrZipCodeIsRequired = errors.New("zip code is required")
+	ErrCityIsRequired    = errors.New("city is required")
+	ErrStateIsRequired   = errors.New("state is required")
 )
 
 type Address struct {
@@ -45,25 +53,33 @@ func NewAddress(userId uuid.UUID, address, number, zipCode, city, state string) 
 
 func (a *Address) Validate() error {
 	if a.Address == "" {
-		return fmt.Errorf("address is required")
+		return ErrAddressIsRequired
 	}
 	if a.Number == "" {
-		return fmt.Errorf("number is required")
+		return ErrNumberIsRequired
 	}
 	if a.ZipCode == "" {
-		return fmt.Errorf("zip code is required")
+		return ErrZipCodeIsRequired
 	}
 	if a.City == "" {
-		return fmt.Errorf("city is required")
+		return ErrCityIsRequired
 	}
 	if a.State == "" {
-		return fmt.Errorf("state is required")
+		return ErrStateIsRequired
 	}
 
 	return nil
 }
 
 type CreateAddressInput struct {
+	Address string `json:"address"`
+	Number  string `json:"number"`
+	ZipCode string `json:"zip_code"`
+	City    string `json:"city"`
+	State   string `json:"state"`
+}
+
+type UpdateAddressInput struct {
 	Address string `json:"address"`
 	Number  string `json:"number"`
 	ZipCode string `json:"zip_code"`
@@ -94,7 +110,9 @@ func CreateAddressHandler(c echo.Context) error {
 	conn, err := sql.Open("postgres", env.DataSourceName)
 
 	if err != nil {
-		panic(err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "Internal server error",
+		})
 	}
 
 	q := db.New(conn)
@@ -110,7 +128,9 @@ func CreateAddressHandler(c echo.Context) error {
 	})
 
 	if err != nil {
-		panic(err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "Internal server error",
+		})
 	}
 
 	return c.JSON(http.StatusCreated, a)
@@ -179,6 +199,85 @@ func GetAddressesHandler(c echo.Context) error {
 
 }
 
+func UpdateAddressHandler(c echo.Context) error {
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(*JwtCustomClaims)
+
+	id := c.Param("id")
+
+	body := new(UpdateAddressInput)
+
+	err := c.Bind(body)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "Invalid request body",
+		})
+	}
+
+	conn, err := sql.Open("postgres", env.DataSourceName)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "Internal server error",
+		})
+	}
+
+	q := db.New(conn)
+
+	a, err := q.GetAddressById(context.Background(), db.GetAddressByIdParams{
+		ID:     uuid.MustParse(id),
+		UserID: claims.ID,
+	})
+
+	if err != nil {
+		return c.JSON(http.StatusNotFound, echo.Map{
+			"message": "Address not found",
+		})
+	}
+
+	params := db.UpdateAddressParams{
+		ID:      a.ID,
+		UserID:  a.UserID,
+		Address: body.Address,
+		Number:  body.Number,
+		ZipCode: body.ZipCode,
+		City:    body.City,
+		State:   body.State,
+	}
+
+	if params.Address == "" {
+		params.Address = a.Address
+	}
+
+	if params.City == "" {
+		params.City = a.City
+	}
+
+	if params.Number == "" {
+		params.Number = a.Number
+	}
+
+	if params.State == "" {
+		params.State = a.State
+	}
+
+	if params.ZipCode == "" {
+		params.ZipCode = a.ZipCode
+	}
+
+	err = q.UpdateAddress(context.Background(), params)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "Internal server error",
+		})
+	}
+
+	return c.JSON(http.StatusNoContent, params)
+
+}
+
 func DeleteAddressHandler(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(*JwtCustomClaims)
@@ -187,7 +286,9 @@ func DeleteAddressHandler(c echo.Context) error {
 	conn, err := sql.Open("postgres", env.DataSourceName)
 
 	if err != nil {
-		panic(err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "Internal server error",
+		})
 	}
 
 	defer conn.Close()
@@ -200,7 +301,7 @@ func DeleteAddressHandler(c echo.Context) error {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusNotFound, echo.Map{
+		return c.JSON(http.StatusNotFound, echo.Map{
 			"message": "Address not found",
 		})
 	}
