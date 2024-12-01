@@ -22,6 +22,9 @@ func main() {
 
 	e.POST("/user", CreateUserHandler)
 	e.POST("/login", LoginHandler)
+	e.GET("/product/:id", GetProductByIdHandler)
+	e.GET("/product", GetProductsHandler)
+	e.GET("/order/product/:id", GetOrdersByProductHandler)
 
 	config := echojwt.Config{
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
@@ -36,11 +39,14 @@ func main() {
 
 	r.PUT("/user", UpdateUserHandler)
 	r.DELETE("/user", DeleteUserHandler)
+
 	r.POST("/address", CreateAddressHandler)
 	r.GET("/address/:id", GetAddressByIdHandler)
 	r.PUT("/address/:id", UpdateAddressHandler)
 	r.GET("/address", GetAddressesHandler)
 	r.DELETE("/address/:id", DeleteAddressHandler)
+
+	r.POST("/order", CreateOrderHandler)
 
 	e.Logger.Fatal(e.Start(":" + env.Port))
 }

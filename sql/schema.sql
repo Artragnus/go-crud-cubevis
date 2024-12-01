@@ -21,4 +21,13 @@ CREATE TABLE products (
     value INTEGER NOT NULL
 );
 
+CREATE TABLE orders (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id),
+    product_id INTEGER NOT NULL REFERENCES products(id),
+    quantity INTEGER NOT NULL,
+    total_value INTEGER NOT NULL,
+    address_id UUID NOT NULL REFERENCES addresses(id)
+);
+
 

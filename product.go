@@ -9,6 +9,12 @@ import (
 	"strconv"
 )
 
+type ProductOutput struct {
+	ID    int32  `json:"id"`
+	Name  string `json:"name"`
+	Value int32  `json:"value"`
+}
+
 func GetProductByIdHandler(c echo.Context) error {
 	id := c.Param("id")
 
@@ -39,6 +45,47 @@ func GetProductByIdHandler(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, product)
+	output := ProductOutput{
+		ID:    product.ID,
+		Name:  product.Name,
+		Value: product.Value,
+	}
+
+	return c.JSON(http.StatusOK, output)
+
+}
+
+func GetProductsHandler(c echo.Context) error {
+	conn, err := sql.Open("postgres", env.DataSourceName)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "Internal server error",
+		})
+	}
+
+	defer conn.Close()
+
+	q := db.New(conn)
+
+	products, err := q.GetProducts(context.Background())
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "Internal server error",
+		})
+	}
+
+	output := make([]ProductOutput, len(products))
+
+	for i, p := range products {
+		output[i] = ProductOutput{
+			ID:    p.ID,
+			Name:  p.Name,
+			Value: p.Value,
+		}
+	}
+
+	return c.JSON(http.StatusOK, output)
 
 }

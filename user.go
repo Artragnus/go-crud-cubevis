@@ -149,7 +149,9 @@ func CreateUserHandler(c echo.Context) error {
 	})
 
 	if err != nil {
-		fmt.Println(err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "Internal server error",
+		})
 	}
 
 	return c.JSON(http.StatusCreated, u)
@@ -208,7 +210,9 @@ func LoginHandler(c echo.Context) error {
 	t, err := token.SignedString([]byte(env.JWTSecret))
 
 	if err != nil {
-		fmt.Println(err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "Internal server error",
+		})
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
@@ -226,7 +230,9 @@ func UpdateUserHandler(c echo.Context) error {
 	err := c.Bind(&body)
 
 	if err != nil {
-		fmt.Println(err)
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "Invalid request body",
+		})
 	}
 
 	var hashedPassword []byte
@@ -249,7 +255,9 @@ func UpdateUserHandler(c echo.Context) error {
 	conn, err := sql.Open("postgres", env.DataSourceName)
 
 	if err != nil {
-		fmt.Println(err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "Internal server error",
+		})
 	}
 
 	defer conn.Close()
@@ -297,7 +305,9 @@ func DeleteUserHandler(c echo.Context) error {
 	conn, err := sql.Open("postgres", env.DataSourceName)
 
 	if err != nil {
-		fmt.Println(err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "Internal server error",
+		})
 	}
 
 	defer conn.Close()
@@ -307,7 +317,9 @@ func DeleteUserHandler(c echo.Context) error {
 	err = q.DeleteUser(context.Background(), claims.ID)
 
 	if err != nil {
-		fmt.Println(err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "Internal server error",
+		})
 	}
 
 	return c.JSON(http.StatusNoContent, nil)

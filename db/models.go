@@ -18,6 +18,15 @@ type Address struct {
 	State   string
 }
 
+type Order struct {
+	ID         uuid.UUID
+	UserID     uuid.UUID
+	ProductID  int32
+	Quantity   int32
+	TotalValue int32
+	AddressID  uuid.UUID
+}
+
 type Product struct {
 	ID    int32
 	Name  string

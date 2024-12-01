@@ -41,6 +41,34 @@ func (q *Queries) CreateAddress(ctx context.Context, arg CreateAddressParams) er
 	return err
 }
 
+const createOrder = `-- name: CreateOrder :exec
+INSERT INTO orders
+(id, user_id, address_id, total_value, product_id, quantity)
+VALUES
+($1, $2, $3, $4, $5, $6)
+`
+
+type CreateOrderParams struct {
+	ID         uuid.UUID
+	UserID     uuid.UUID
+	AddressID  uuid.UUID
+	TotalValue int32
+	ProductID  int32
+	Quantity   int32
+}
+
+func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) error {
+	_, err := q.db.ExecContext(ctx, createOrder,
+		arg.ID,
+		arg.UserID,
+		arg.AddressID,
+		arg.TotalValue,
+		arg.ProductID,
+		arg.Quantity,
+	)
+	return err
+}
+
 const createUser = `-- name: CreateUser :exec
 INSERT INTO users (id, name, email, password) VALUES ($1, $2, $3, $4)
 `
@@ -212,6 +240,63 @@ func (q *Queries) GetUserById(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.Password,
 	)
 	return i, err
+}
+
+const getUsersByProduct = `-- name: GetUsersByProduct :many
+SELECT u.name, u.email, o.total_value, o.quantity, o.id as order_id, a.state, a.address, a.number, a.zip_code, a.city
+FROM users u
+JOIN orders o
+ON o.product_id = $1
+JOIN addresses a
+ON a.id = o.address_id
+WHERE u.id = o.user_id
+`
+
+type GetUsersByProductRow struct {
+	Name       string
+	Email      string
+	TotalValue int32
+	Quantity   int32
+	OrderID    uuid.UUID
+	State      string
+	Address    string
+	Number     string
+	ZipCode    string
+	City       string
+}
+
+func (q *Queries) GetUsersByProduct(ctx context.Context, productID int32) ([]GetUsersByProductRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUsersByProduct, productID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUsersByProductRow
+	for rows.Next() {
+		var i GetUsersByProductRow
+		if err := rows.Scan(
+			&i.Name,
+			&i.Email,
+			&i.TotalValue,
+			&i.Quantity,
+			&i.OrderID,
+			&i.State,
+			&i.Address,
+			&i.Number,
+			&i.ZipCode,
+			&i.City,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateAddress = `-- name: UpdateAddress :exec

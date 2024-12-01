@@ -172,7 +172,17 @@ func GetAddressByIdHandler(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, address)
+	output := Address{
+		ID:      address.ID,
+		UserID:  address.UserID,
+		Address: address.Address,
+		Number:  address.Number,
+		ZipCode: address.ZipCode,
+		City:    address.City,
+		State:   address.State,
+	}
+
+	return c.JSON(http.StatusOK, output)
 }
 
 func GetAddressesHandler(c echo.Context) error {
@@ -195,7 +205,21 @@ func GetAddressesHandler(c echo.Context) error {
 		panic(err)
 	}
 
-	return c.JSON(http.StatusOK, addresses)
+	output := make([]Address, len(addresses))
+
+	for i, a := range addresses {
+		output[i] = Address{
+			ID:      a.ID,
+			UserID:  a.UserID,
+			Address: a.Address,
+			Number:  a.Number,
+			ZipCode: a.ZipCode,
+			City:    a.City,
+			State:   a.State,
+		}
+	}
+
+	return c.JSON(http.StatusOK, output)
 
 }
 
@@ -205,9 +229,17 @@ func UpdateAddressHandler(c echo.Context) error {
 
 	id := c.Param("id")
 
+	parseUUID, err := uuid.Parse(id)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "Invalid address id",
+		})
+	}
+
 	body := new(UpdateAddressInput)
 
-	err := c.Bind(body)
+	err = c.Bind(body)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -226,7 +258,7 @@ func UpdateAddressHandler(c echo.Context) error {
 	q := db.New(conn)
 
 	a, err := q.GetAddressById(context.Background(), db.GetAddressByIdParams{
-		ID:     uuid.MustParse(id),
+		ID:     parseUUID,
 		UserID: claims.ID,
 	})
 
@@ -282,6 +314,13 @@ func DeleteAddressHandler(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(*JwtCustomClaims)
 	id := c.Param("id")
+	parseUUID, err := uuid.Parse(id)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "Invalid address id",
+		})
+	}
 
 	conn, err := sql.Open("postgres", env.DataSourceName)
 
@@ -296,7 +335,7 @@ func DeleteAddressHandler(c echo.Context) error {
 	q := db.New(conn)
 
 	err = q.DeleteAddress(context.Background(), db.DeleteAddressParams{
-		ID:     uuid.MustParse(id),
+		ID:     parseUUID,
 		UserID: claims.ID,
 	})
 

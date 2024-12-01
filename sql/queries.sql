@@ -38,3 +38,19 @@ SELECT * FROM products WHERE id = $1;
 
 -- name: GetProducts :many
 SELECT * FROM products;
+
+-- name: CreateOrder :exec
+INSERT INTO orders
+(id, user_id, address_id, total_value, product_id, quantity)
+VALUES
+($1, $2, $3, $4, $5, $6);
+
+-- name: GetUsersByProduct :many
+SELECT u.name, u.email, o.total_value, o.quantity, o.id as order_id, a.state, a.address, a.number, a.zip_code, a.city
+FROM users u
+JOIN orders o
+ON o.product_id = $1
+JOIN addresses a
+ON a.id = o.address_id
+WHERE u.id = o.user_id;
+
