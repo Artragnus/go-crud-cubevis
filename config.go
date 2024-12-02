@@ -23,6 +23,10 @@ func LoadConfig(path string) (*Conf, error) {
 	viper.AutomaticEnv()
 	err := viper.ReadInConfig()
 
+	if err != nil {
+		return nil, errors.New("error reading config file")
+	}
+
 	if !viper.IsSet("PORT") {
 		return nil, fmt.Errorf("PORT is not set in config file")
 	}
@@ -45,10 +49,6 @@ func LoadConfig(path string) (*Conf, error) {
 
 	if !viper.IsSet("DATA_SOURCE_NAME") {
 		return nil, errors.New("DATA_SOURCE_NAME is not set in config file")
-	}
-
-	if err != nil {
-		return nil, errors.New("error reading config file")
 	}
 
 	err = viper.Unmarshal(&cfg)
