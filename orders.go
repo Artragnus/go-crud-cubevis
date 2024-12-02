@@ -215,8 +215,8 @@ func GetDetailedOrderByIdHandler(c echo.Context) error {
 	q := db.New(conn)
 
 	order, err := q.GetDeitaledOrderById(context.Background(), db.GetDeitaledOrderByIdParams{
-		ID:   parseUUID,
-		ID_2: claims.ID,
+		ID:     parseUUID,
+		UserID: claims.ID,
 	})
 
 	if err != nil {

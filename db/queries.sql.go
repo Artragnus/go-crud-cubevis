@@ -188,20 +188,19 @@ func (q *Queries) GetAddresses(ctx context.Context, userID uuid.UUID) ([]Address
 
 const getDeitaledOrderById = `-- name: GetDeitaledOrderById :one
 SELECT u.name, u.email, o.total_value, o.quantity, p.name as product_name, a.state, a.address, a.number, a.zip_code, a.city
-FROM users u
-JOIN orders o
-ON o.id = $1
-AND u.id = $2
+FROM orders o
+JOIN users u
+ON u.id = o.user_id
 JOIN products p
 ON p.id = o.product_id
 JOIN addresses a
 ON a.id = o.address_id
-AND a.user_id = u.id
+WHERE o.id = $1 AND o.user_id = $2
 `
 
 type GetDeitaledOrderByIdParams struct {
-	ID   uuid.UUID
-	ID_2 uuid.UUID
+	ID     uuid.UUID
+	UserID uuid.UUID
 }
 
 type GetDeitaledOrderByIdRow struct {
@@ -218,7 +217,7 @@ type GetDeitaledOrderByIdRow struct {
 }
 
 func (q *Queries) GetDeitaledOrderById(ctx context.Context, arg GetDeitaledOrderByIdParams) (GetDeitaledOrderByIdRow, error) {
-	row := q.db.QueryRowContext(ctx, getDeitaledOrderById, arg.ID, arg.ID_2)
+	row := q.db.QueryRowContext(ctx, getDeitaledOrderById, arg.ID, arg.UserID)
 	var i GetDeitaledOrderByIdRow
 	err := row.Scan(
 		&i.Name,
