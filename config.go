@@ -11,7 +11,6 @@ type Conf struct {
 	JWTSecret      string `mapstructure:"JWT_SECRET"`
 	DBUser         string `mapstructure:"DB_USER"`
 	DBPass         string `mapstructure:"DB_PASS"`
-	DBPort         string `mapstructure:"DB_PORT"`
 	DBName         string `mapstructure:"DB_NAME"`
 	DataSourceName string `mapstructure:"DATA_SOURCE_NAME"`
 }
@@ -38,10 +37,6 @@ func LoadConfig(path string) (*Conf, error) {
 
 	if !viper.IsSet("DB_PASS") {
 		return nil, errors.New("DB_PASS is not set in config file")
-	}
-
-	if !viper.IsSet("DB_PORT") {
-		return nil, errors.New("DB_PORT is not set in config file")
 	}
 
 	if !viper.IsSet("DB_NAME") {
