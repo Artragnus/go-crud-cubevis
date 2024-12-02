@@ -9,18 +9,18 @@ services:
         POSTGRES_PASSWORD: ${DB_PASS}
         POSTGRES_DB: ${DB_NAME}
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:5432"
 
     volumes:
         - /tmp/database/postgres :/var/lib/postgresql/data
 
-#  app:
-#    container_name: go-app-cubevis
-#    build:
-#      context: .
-#      dockerfile: Dockerfile
-#    ports:
-#      - "${PORT}:${PORT}"
-#    environment:
-#      - CGO_ENABLED=0
-#      - GOOS=linux
+  app:
+    container_name: go-app-cubevis
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT}:${PORT}"
+    environment:
+      - CGO_ENABLED=0
+      - GOOS=linux
