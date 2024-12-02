@@ -1,4 +1,4 @@
-# CubeVision API
+# Cubevis API
 
 Projeto com base em um desafio técnico onde era necessário criar um CRUD utilizando GO e seus principais pacotes.
 
