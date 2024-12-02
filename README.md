@@ -36,7 +36,7 @@ A API consiste em um CRUD simples, com cadastro e autenticação de usuário, ca
 Certifique-se de ter as seguintes ferramentas instaladas:
 
 - **Docker**: Para executar os contêineres.
-- **Make**: Para automação das tarefas de build e migrações.
+- **Make**: Para automações de tarefas.
 - **Migrate CLI**: Caso deseje realizar as migrations localmente.
 - **Go**: Para compilar o código localmente, caso deseje rodar o projeto sem Docker.
 
