@@ -58,6 +58,19 @@ type GetOrdersByProductOutput struct {
 	City       string    `json:"city"`
 }
 
+type GetDetailedOrderByIdOutput struct {
+	Name        string `json:"name"`
+	Email       string `json:"email"`
+	TotalValue  int32  `json:"total_value"`
+	Quantity    int32  `json:"quantity"`
+	ProductName string `json:"product_name"`
+	State       string `json:"state"`
+	Address     string `json:"address"`
+	Number      string `json:"number"`
+	ZipCode     string `json:"zip_code"`
+	City        string `json:"city"`
+}
+
 func CreateOrderHandler(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(*JwtCustomClaims)
@@ -225,7 +238,20 @@ func GetDetailedOrderByIdHandler(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, order)
+	output := GetDetailedOrderByIdOutput{
+		Name:        order.Name,
+		Email:       order.Email,
+		TotalValue:  order.TotalValue,
+		Quantity:    order.Quantity,
+		ProductName: order.ProductName,
+		State:       order.State,
+		Address:     order.Address,
+		Number:      order.Number,
+		ZipCode:     order.ZipCode,
+		City:        order.City,
+	}
+
+	return c.JSON(http.StatusOK, output)
 }
 
 func GetOrdersHandler(c echo.Context) error {
